@@ -2,6 +2,10 @@ plugins {
     id 'java'
 }
 
+ext {
+    log4jVersion = "2.11.1"
+}
+
 group 'tiny-netty'
 version '1.0'
 
@@ -15,5 +19,8 @@ repositories {
 }
 
 dependencies {
+    compile("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+    compile("org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}")
+    compile("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
     testCompile("junit:junit:4.12")
 }
