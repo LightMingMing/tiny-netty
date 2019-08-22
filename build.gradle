@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group 'tiny-netty'
+version '1.0'
+
+sourceCompatibility = '11'
+targetCompatibility = '11'
+
+repositories {
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    jcenter()
+
+}
+
+dependencies {
+    testCompile("junit:junit:4.12")
+}
