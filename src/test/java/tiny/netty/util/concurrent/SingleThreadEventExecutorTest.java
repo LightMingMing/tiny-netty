@@ -3,6 +3,7 @@ package tiny.netty.util.concurrent;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
@@ -16,7 +17,7 @@ public class SingleThreadEventExecutorTest {
 
     @Test
     public void testShutdown() throws InterruptedException {
-        SimpleSingleThreadEventExecutor executor = new SimpleSingleThreadEventExecutor();
+        SimpleEventExecutor executor = new SimpleEventExecutor();
 
         executor.shutdownGracefully(1, 5, TimeUnit.SECONDS);
         assertThat(executor.isShuttingDown()).isTrue();
@@ -28,7 +29,7 @@ public class SingleThreadEventExecutorTest {
 
     @Test
     public void testTaskExecute() throws InterruptedException {
-        SimpleSingleThreadEventExecutor executor = new SimpleSingleThreadEventExecutor();
+        SimpleEventExecutor executor = new SimpleEventExecutor();
 
         CompletableFuture<?> taskFuture = new CompletableFuture<>();
         executor.execute(() -> taskFuture.complete(null));
@@ -42,12 +43,16 @@ public class SingleThreadEventExecutorTest {
         assertThat(executor.isCleanup()).isTrue();
     }
 
-    static class SimpleSingleThreadEventExecutor extends SingleThreadEventExecutor {
+    static class SimpleEventExecutor extends SingleThreadEventExecutor {
 
         volatile boolean cleanup = false;
 
-        private SimpleSingleThreadEventExecutor() {
+        SimpleEventExecutor() {
             super(null, new DefaultThreadFactory("test"));
+        }
+
+        SimpleEventExecutor(EventExecutorGroup parent, ThreadFactory threadFactory) {
+            super(parent, threadFactory);
         }
 
         @Override
