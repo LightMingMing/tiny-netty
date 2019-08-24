@@ -29,8 +29,11 @@ public interface EventExecutor extends EventExecutorGroup {
     CompletableFuture<?> shutdownGracefully();
 
     @Override
-    CompletableFuture<?> shutdownGracefully(long quietShutdownPeriod, long timeout, TimeUnit timeUnit);
+    CompletableFuture<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit timeUnit);
 
     @Override
     CompletableFuture<?> terminationFuture();
+
+    @Override
+    boolean awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException;
 }

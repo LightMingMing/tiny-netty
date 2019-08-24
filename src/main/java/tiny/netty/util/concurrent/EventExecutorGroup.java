@@ -23,7 +23,9 @@ public interface EventExecutorGroup extends Executor, Iterable<EventExecutor> {
 
     CompletableFuture<?> shutdownGracefully();
 
-    CompletableFuture<?> shutdownGracefully(long quietShutdownPeriod, long timeout, TimeUnit timeUnit);
+    CompletableFuture<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit timeUnit);
 
     CompletableFuture<?> terminationFuture();
+
+    boolean awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException;
 }
