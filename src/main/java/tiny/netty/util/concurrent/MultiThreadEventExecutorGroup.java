@@ -18,8 +18,7 @@ public abstract class MultiThreadEventExecutorGroup extends AbstractEventExecuto
     private final CompletableFuture<?> terminationFuture = new CompletableFuture<>();
     private final Collection<EventExecutor> readonlyChildren;
     private final EventExecutor[] children;
-    private final AtomicInteger idx;
-    private final int nThreads;
+    private final EventExecutorChooser chooser;
 
     protected MultiThreadEventExecutorGroup(int nThreads, ThreadFactory threadFactory) {
         this.children = new EventExecutor[nThreads];
@@ -33,16 +32,14 @@ public abstract class MultiThreadEventExecutorGroup extends AbstractEventExecuto
             });
         }
         this.readonlyChildren = Set.of(children);
-        this.nThreads = nThreads;
-        this.idx = new AtomicInteger(nThreads);
+        this.chooser = EventExecutorChooserFactory.INSTANCE.newChooser(children);
     }
 
     protected abstract EventExecutor newChild(EventExecutorGroup parent, ThreadFactory threadFactory);
 
     @Override
     public EventExecutor next() {
-        // TODO 事件执行选择器
-        return children[idx.getAndIncrement() % nThreads];
+        return chooser.next();
     }
 
     @Override
