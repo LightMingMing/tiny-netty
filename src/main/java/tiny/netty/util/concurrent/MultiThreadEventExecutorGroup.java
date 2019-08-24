@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,11 +21,15 @@ public abstract class MultiThreadEventExecutorGroup extends AbstractEventExecuto
     private final EventExecutor[] children;
     private final EventExecutorChooser chooser;
 
-    protected MultiThreadEventExecutorGroup(int nThreads, ThreadFactory threadFactory) {
+    protected MultiThreadEventExecutorGroup(int nThreads, ThreadFactory threadFactory, Object... args) {
+        this(nThreads, new ThreadPerTaskExecutor(threadFactory), args);
+    }
+
+    protected MultiThreadEventExecutorGroup(int nThreads, Executor executor, Object... args) {
         this.children = new EventExecutor[nThreads];
         AtomicInteger terminatedChildren = new AtomicInteger();
         for (int i = 0; i < nThreads; i++) {
-            children[i] = newChild(this, threadFactory);
+            children[i] = newChild(executor, args);
             children[i].terminationFuture().thenRun(() -> {
                 if (terminatedChildren.incrementAndGet() == nThreads) {
                     terminationFuture.complete(null);
@@ -35,7 +40,7 @@ public abstract class MultiThreadEventExecutorGroup extends AbstractEventExecuto
         this.chooser = EventExecutorChooserFactory.INSTANCE.newChooser(children);
     }
 
-    protected abstract EventExecutor newChild(EventExecutorGroup parent, ThreadFactory threadFactory);
+    protected abstract EventExecutor newChild(Executor executor, Object... args);
 
     @Override
     public EventExecutor next() {

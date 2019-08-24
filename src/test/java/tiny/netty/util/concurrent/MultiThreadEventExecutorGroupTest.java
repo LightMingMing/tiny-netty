@@ -3,7 +3,7 @@ package tiny.netty.util.concurrent;
 import org.junit.Test;
 import tiny.netty.util.concurrent.SingleThreadEventExecutorTest.SimpleEventExecutor;
 
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
@@ -43,8 +43,8 @@ public class MultiThreadEventExecutorGroupTest {
         }
 
         @Override
-        protected EventExecutor newChild(EventExecutorGroup parent, ThreadFactory threadFactory) {
-            return new SimpleEventExecutor(this, threadFactory);
+        protected EventExecutor newChild(Executor executor, Object... args) {
+            return new SimpleEventExecutor(this, executor);
         }
 
     }

@@ -16,5 +16,5 @@ public interface EventLoopGroup extends EventExecutorGroup {
     ChannelFuture<?> register(Channel channel);
 
     // 异步将通道注册到事件循环组中
-    ChannelFuture<?> register(Channel channel, ChannelFuture<?> promise);
+    ChannelFuture<?> register(ChannelFuture<?> promise);
 }

@@ -3,7 +3,7 @@ package tiny.netty.util.concurrent;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
@@ -51,8 +51,8 @@ public class SingleThreadEventExecutorTest {
             super(null, new DefaultThreadFactory("test"));
         }
 
-        SimpleEventExecutor(EventExecutorGroup parent, ThreadFactory threadFactory) {
-            super(parent, threadFactory);
+        SimpleEventExecutor(EventExecutorGroup parent, Executor executor) {
+            super(parent, executor);
         }
 
         @Override

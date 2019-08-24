@@ -3,6 +3,7 @@ package tiny.netty.channel;
 import tiny.netty.util.concurrent.EventExecutorGroup;
 import tiny.netty.util.concurrent.SingleThreadEventExecutor;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -14,6 +15,10 @@ public abstract class AbstractEventLoop extends SingleThreadEventExecutor implem
 
     protected AbstractEventLoop(EventExecutorGroup parent, ThreadFactory factory) {
         super(parent, factory);
+    }
+
+    protected AbstractEventLoop(EventExecutorGroup parent, Executor executor) {
+        super(parent, executor);
     }
 
     @Override
@@ -28,6 +33,6 @@ public abstract class AbstractEventLoop extends SingleThreadEventExecutor implem
 
     @Override
     public ChannelFuture<?> register(Channel channel) {
-        return register(channel, channel.newPromise());
+        return register(channel.newPromise());
     }
 }

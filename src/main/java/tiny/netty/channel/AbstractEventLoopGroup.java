@@ -11,8 +11,14 @@ import java.util.concurrent.ThreadFactory;
  */
 public abstract class AbstractEventLoopGroup extends MultiThreadEventExecutorGroup implements EventLoopGroup {
 
-    protected AbstractEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-        super(nThreads, threadFactory);
+    private static final int DEFAULT_EVENT_LOOP_THREADS = Runtime.getRuntime().availableProcessors() * 2;
+
+    protected AbstractEventLoopGroup(ThreadFactory threadFactory, Object... args) {
+        this(DEFAULT_EVENT_LOOP_THREADS, threadFactory, args);
+    }
+
+    protected AbstractEventLoopGroup(int nThreads, ThreadFactory threadFactory, Object... args) {
+        super(nThreads, threadFactory, args);
     }
 
     @Override
@@ -26,7 +32,7 @@ public abstract class AbstractEventLoopGroup extends MultiThreadEventExecutorGro
     }
 
     @Override
-    public ChannelFuture<?> register(Channel channel, ChannelFuture<?> promise) {
-        return next().register(channel, promise);
+    public ChannelFuture<?> register(ChannelFuture<?> promise) {
+        return next().register(promise);
     }
 }
