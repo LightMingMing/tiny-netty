@@ -15,6 +15,8 @@ public interface Channel {
 
     Unsafe unsafe();
 
+    ChannelFuture<?> closeFuture();
+
     // 创建一个新的channelFuture
     ChannelFuture<?> newPromise();
 
@@ -23,5 +25,7 @@ public interface Channel {
         ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise);
 
         void deregister(ChannelFuture<?> promise);
+
+        void close(ChannelFuture<?> promise);
     }
 }

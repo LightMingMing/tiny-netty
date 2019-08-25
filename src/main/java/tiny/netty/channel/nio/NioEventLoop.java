@@ -91,7 +91,7 @@ public class NioEventLoop extends AbstractEventLoop {
             key.cancel();
             channels.add((AbstractNioChannel) key.attachment());
         }
-        channels.forEach(channel -> channel.unsafe().deregister(channel.newPromise()));
+        channels.forEach(channel -> channel.unsafe().close(channel.newPromise()));
     }
 
     @Override

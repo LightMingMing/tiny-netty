@@ -9,11 +9,12 @@ import org.slf4j.LoggerFactory;
  * @author zhaomingming
  */
 public abstract class AbstractChannel implements Channel {
-
+    ;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Unsafe unsafe;
     private volatile EventLoop eventLoop;
     private volatile boolean registered;
+    private ChannelFuture<?> closeFuture = new CompletableChannelFuture<>(this);
 
     protected AbstractChannel() {
         unsafe = newUnsafe();
@@ -39,13 +40,21 @@ public abstract class AbstractChannel implements Channel {
         return unsafe;
     }
 
+    @Override
+    public ChannelFuture<?> closeFuture() {
+        return closeFuture;
+    }
+
     protected abstract Unsafe newUnsafe();
 
     protected abstract void doRegister() throws Exception;
 
     protected abstract void doDeregister() throws Exception;
 
+    protected abstract void doClose() throws Exception;
+
     protected abstract class AbstractUnsafe implements Unsafe {
+
         @Override
         public ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise) {
             AbstractChannel.this.eventLoop = eventLoop;
@@ -113,6 +122,32 @@ public abstract class AbstractChannel implements Channel {
                 safeSetFailure(promise, cause);
             }
 
+        }
+
+        @Override
+        public void close(ChannelFuture<?> promise) {
+            assert eventLoop.inEventLoop();
+
+            if (closeFuture.isDone()) {
+                safeSetSuccess(promise);
+                return;
+            }
+            close0(promise);
+        }
+
+        private void close0(ChannelFuture<?> promise) {
+            // TODO netty里这部分有点复杂, 这里把核心部分弄上去了...
+            try {
+                doClose();
+                safeSetSuccess(promise);
+                closeFuture.complete(null);
+            } catch (Throwable cause) {
+                logger.warn("Failed to close the channel", cause);
+                safeSetFailure(promise, cause);
+                closeFuture.complete(null);
+            }
+            // TODO
+            deregister(newPromise());
         }
 
         private void safeSetSuccess(ChannelFuture<?> promise) {

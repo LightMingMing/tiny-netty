@@ -44,6 +44,12 @@ public abstract class AbstractNioChannel extends AbstractChannel implements NioC
     }
 
     @Override
+    protected void doClose() throws Exception {
+        logger.debug("(nio) close the channel");
+        javaChannel().close();
+    }
+
+    @Override
     public NioUnsafe unsafe() {
         return (NioUnsafe) super.unsafe();
     }
