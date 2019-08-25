@@ -1,5 +1,7 @@
 package tiny.netty.channel;
 
+import java.net.SocketAddress;
+
 /**
  * 通道接口
  *
@@ -12,6 +14,9 @@ public interface Channel {
 
     // 状态值: 是否注册到事件循环器上
     boolean isRegistered();
+
+    // 状态值: 是否激活
+    boolean isActive();
 
     Unsafe unsafe();
 
@@ -27,5 +32,7 @@ public interface Channel {
         void deregister(ChannelFuture<?> promise);
 
         void close(ChannelFuture<?> promise);
+
+        void bind(SocketAddress localAddress, ChannelFuture<?> promise);
     }
 }

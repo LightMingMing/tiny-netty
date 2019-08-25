@@ -1,6 +1,7 @@
 package tiny.netty.channel.nio;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 
@@ -24,8 +25,25 @@ public class NioServerSocketChannel extends AbstractNioChannel {
     }
 
     @Override
+    public ServerSocketChannel javaChannel() {
+        return (ServerSocketChannel) super.javaChannel();
+    }
+
+    @Override
     protected Unsafe newUnsafe() {
         return new NioMessageUnsafe();
+    }
+
+    @Override
+    protected void doBind(SocketAddress localAddress) throws Exception {
+        logger.debug("(nio) bind the socketAddress: {}", localAddress);
+        // TODO 配置backlog
+        javaChannel().bind(localAddress);
+    }
+
+    @Override
+    public boolean isActive() {
+        return javaChannel().socket().isBound();
     }
 
     private class NioMessageUnsafe extends AbstractNioUnsafe implements NioUnsafe {

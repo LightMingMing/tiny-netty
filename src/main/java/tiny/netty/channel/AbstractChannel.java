@@ -3,6 +3,8 @@ package tiny.netty.channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
+
 /**
  * 通道接口抽象实现
  *
@@ -52,6 +54,8 @@ public abstract class AbstractChannel implements Channel {
     protected abstract void doDeregister() throws Exception;
 
     protected abstract void doClose() throws Exception;
+
+    protected abstract void doBind(SocketAddress localAddress) throws Exception;
 
     protected abstract class AbstractUnsafe implements Unsafe {
 
@@ -148,6 +152,29 @@ public abstract class AbstractChannel implements Channel {
             }
             // TODO
             deregister(newPromise());
+        }
+
+        @Override
+        public void bind(SocketAddress localAddress, ChannelFuture<?> promise) {
+            if (!eventLoop.inEventLoop()) {
+                eventLoop.execute(() -> bind0(localAddress, promise));
+            } else {
+                bind0(localAddress, promise);
+            }
+        }
+
+        private void bind0(SocketAddress localAddress, ChannelFuture<?> promise) {
+            if (isActive()) {
+                safeSetFailure(promise, new IllegalStateException("bind already."));
+            }
+            try {
+                doBind(localAddress);
+                safeSetSuccess(promise);
+                // TODO 回调channelActive()方法
+            } catch (Throwable cause) {
+                logger.warn("Failed to bind the socketAddress : {}", localAddress);
+                safeSetFailure(promise, cause);
+            }
         }
 
         private void safeSetSuccess(ChannelFuture<?> promise) {
