@@ -21,5 +21,7 @@ public interface Channel {
     interface Unsafe {
 
         ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise);
+
+        void deregister(ChannelFuture<?> promise);
     }
 }

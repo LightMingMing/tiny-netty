@@ -2,7 +2,9 @@ package tiny.netty.channel.nio;
 
 import org.junit.Test;
 import tiny.netty.channel.Channel;
+import tiny.netty.channel.ChannelFuture;
 import tiny.netty.channel.EventLoop;
+import tiny.netty.channel.EventLoopGroup;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,12 +22,59 @@ public class NioEventLoopTest {
         EventLoop eventLoop = new NioEventLoopGroup(1).next();
         Channel channel = new NioServerSocketChannel();
         try {
-            eventLoop.register(channel);
+            eventLoop.register(channel).get();
+            assertThat(channel.isRegistered());
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             eventLoop.awaitTermination(2, TimeUnit.SECONDS);
-            assertThat(channel.isRegistered()).isTrue();
+            assertThat(channel.isRegistered()).isFalse();
             assertThat(eventLoop.isTerminated());
+        }
+    }
+
+    @Test
+    public void testReRegister() throws Exception {
+        EventLoop eventLoop = new NioEventLoopGroup(1).next();
+        Channel channel = new NioServerSocketChannel();
+        try {
+            eventLoop.register(channel).get();
+            assertThat(channel.isRegistered());
+
+            ChannelFuture<?> deregisterFuture = channel.newPromise();
+            channel.unsafe().deregister(deregisterFuture);
+            deregisterFuture.get();
+            assertThat(channel.isRegistered()).isFalse();
+
+            eventLoop.register(channel).get();
+            assertThat(channel.isRegistered());
+        } finally {
+            eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            eventLoop.awaitTermination(2, TimeUnit.SECONDS);
+            assertThat(channel.isRegistered()).isFalse();
+            assertThat(eventLoop.isTerminated());
+        }
+    }
+
+    @Test
+    public void testReRegisterAnotherEventLoop() throws Exception {
+        EventLoopGroup group = new NioEventLoopGroup(2);
+        Channel channel = new NioServerSocketChannel();
+        try {
+            group.register(channel).get();
+            assertThat(channel.isRegistered());
+
+            ChannelFuture<?> deregisterFuture = channel.newPromise();
+            channel.unsafe().deregister(deregisterFuture);
+            deregisterFuture.get();
+            assertThat(channel.isRegistered()).isFalse();
+
+            group.register(channel).get();
+            assertThat(channel.isRegistered());
+        } finally {
+            group.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            group.awaitTermination(2, TimeUnit.SECONDS);
+            assertThat(channel.isRegistered()).isFalse();
+            assertThat(group.isTerminated());
         }
     }
 }

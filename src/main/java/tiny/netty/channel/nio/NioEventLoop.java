@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -70,6 +73,7 @@ public class NioEventLoop extends AbstractEventLoop {
             }
             if (isShuttingDown()) {
                 if (confirmShutdown()) {
+                    closeAll();
                     return;
                 }
             }
@@ -78,6 +82,16 @@ public class NioEventLoop extends AbstractEventLoop {
 
     private void processSelectedKey(SelectionKey key) {
         // TODO 处理选择的Key
+    }
+
+    private void closeAll() {
+        Set<SelectionKey> keys = selector.keys();
+        Collection<AbstractNioChannel> channels = new ArrayList<>();
+        for (SelectionKey key : keys) {
+            key.cancel();
+            channels.add((AbstractNioChannel) key.attachment());
+        }
+        channels.forEach(channel -> channel.unsafe().deregister(channel.newPromise()));
     }
 
     @Override

@@ -43,6 +43,8 @@ public abstract class AbstractChannel implements Channel {
 
     protected abstract void doRegister() throws Exception;
 
+    protected abstract void doDeregister() throws Exception;
+
     protected abstract class AbstractUnsafe implements Unsafe {
         @Override
         public ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise) {
@@ -77,6 +79,37 @@ public abstract class AbstractChannel implements Channel {
 
             } catch (Throwable cause) {
                 logger.warn("Failed to register.", cause);
+                safeSetFailure(promise, cause);
+            }
+
+        }
+
+        @Override
+        public void deregister(ChannelFuture<?> promise) {
+            if (!eventLoop.inEventLoop()) {
+                eventLoop.execute(() -> deregister0(promise));
+            } else {
+                deregister0(promise);
+            }
+            AbstractChannel.this.eventLoop = null;
+        }
+
+        private void deregister0(ChannelFuture<?> promise) {
+            try {
+                if (!isRegistered()) {
+                    promise.completeExceptionally(new IllegalStateException("unregistered to an eventLoop"));
+                    return;
+                }
+                doDeregister();
+                registered = false;
+
+                // TODO 回调channelUnregistered()
+
+                safeSetSuccess(promise);
+                // TODO 回调handlerRemoved()
+
+            } catch (Throwable cause) {
+                logger.warn("Failed to deregister.", cause);
                 safeSetFailure(promise, cause);
             }
 
