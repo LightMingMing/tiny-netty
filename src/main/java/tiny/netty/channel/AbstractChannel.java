@@ -51,8 +51,9 @@ public abstract class AbstractChannel implements Channel {
                 // 事件循环器串行处理
                 // TODO 考虑任务没有接收情况下, 将通到关闭, 并且promise设为失败
                 eventLoop.execute(() -> register0(promise));
+            } else {
+                register0(promise);
             }
-            register0(promise);
             return promise;
         }
 
