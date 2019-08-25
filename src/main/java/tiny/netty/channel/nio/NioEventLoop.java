@@ -35,6 +35,10 @@ public class NioEventLoop extends AbstractEventLoop {
         return promise.channel().unsafe().register(this, promise);
     }
 
+    Selector selector() {
+        return selector;
+    }
+
     @Override
     protected void run() {
         // selector.wakeup() 使当前阻塞线程的selector.select()操作立即返回 如果没有阻塞的选择操作那么下次select()方法会立即返回
