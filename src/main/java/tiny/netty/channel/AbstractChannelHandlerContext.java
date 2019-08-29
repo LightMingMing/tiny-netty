@@ -15,18 +15,18 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final EventExecutor executor;
-    private final Channel channel;
+    private final ChannelPipeline pipeline;
     private final String name;
     private final boolean inbound;
     private final boolean outbound;
     private AbstractChannelHandlerContext prev;
     private AbstractChannelHandlerContext next;
 
-    protected AbstractChannelHandlerContext(Channel channel, EventExecutor executor, String name, boolean inbound, boolean outbound) {
-        if (channel == null) {
+    protected AbstractChannelHandlerContext(ChannelPipeline pipeline, EventExecutor executor, String name, boolean inbound, boolean outbound) {
+        if (pipeline == null) {
             throw new IllegalArgumentException("channel is null");
         }
-        this.channel = channel;
+        this.pipeline = pipeline;
         this.executor = executor;
         this.name = name;
         this.inbound = inbound;
@@ -35,12 +35,17 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
 
     @Override
     public Channel channel() {
-        return channel;
+        return pipeline.channel();
+    }
+
+    @Override
+    public ChannelPipeline pipeline() {
+        return pipeline;
     }
 
     @Override
     public EventExecutor executor() {
-        return executor != null ? executor : channel.eventLoop();
+        return executor != null ? executor : channel().eventLoop();
     }
 
     @Override

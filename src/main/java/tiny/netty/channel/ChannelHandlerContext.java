@@ -15,6 +15,8 @@ public interface ChannelHandlerContext extends ChannelInboundInvoker, ChannelOut
 
     Channel channel();
 
+    ChannelPipeline pipeline();
+
     EventExecutor executor();
 
     String name();

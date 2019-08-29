@@ -11,8 +11,8 @@ public class DefaultChannelHandlerContext extends AbstractChannelHandlerContext 
 
     private final ChannelHandler handler;
 
-    public DefaultChannelHandlerContext(Channel channel, EventExecutor executor, ChannelHandler handler, String name) {
-        super(channel, executor, name, isInbound(handler), isOutbound(handler));
+    public DefaultChannelHandlerContext(ChannelPipeline pipeline, EventExecutor executor, ChannelHandler handler, String name) {
+        super(pipeline, executor, name, isInbound(handler), isOutbound(handler));
         this.handler = handler;
     }
 
