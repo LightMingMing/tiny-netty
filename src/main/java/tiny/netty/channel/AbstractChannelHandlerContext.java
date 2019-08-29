@@ -24,7 +24,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
 
     protected AbstractChannelHandlerContext(ChannelPipeline pipeline, EventExecutor executor, String name, boolean inbound, boolean outbound) {
         if (pipeline == null) {
-            throw new IllegalArgumentException("channel is null");
+            throw new IllegalArgumentException("pipeline is null");
         }
         this.pipeline = pipeline;
         this.executor = executor;
