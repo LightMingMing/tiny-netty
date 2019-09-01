@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tiny.netty.util.concurrent.EventExecutor;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.net.SocketAddress;
 
 /**
@@ -13,14 +15,30 @@ import java.net.SocketAddress;
  */
 public abstract class AbstractChannelHandlerContext implements ChannelHandlerContext {
 
+    private static final int INIT = 0;
+    private static final int ADD_PENDING = 1;
+    private static final int ADD_COMPLETE = 2;
+    private static final int REMOVE_COMPLETE = 3;
+    private static final VarHandle STATE_HANDLE;
+
+    static {
+        MethodHandles.Lookup l = MethodHandles.lookup();
+        try {
+            STATE_HANDLE = l.findVarHandle(AbstractChannelHandlerContext.class, "handlerState", int.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final EventExecutor executor;
     private final ChannelPipeline pipeline;
     private final String name;
     private final boolean inbound;
     private final boolean outbound;
-    private AbstractChannelHandlerContext prev;
-    private AbstractChannelHandlerContext next;
+    volatile AbstractChannelHandlerContext prev;
+    volatile AbstractChannelHandlerContext next;
+    private volatile int handlerState = INIT;
 
     protected AbstractChannelHandlerContext(ChannelPipeline pipeline, EventExecutor executor, String name, boolean inbound, boolean outbound) {
         if (pipeline == null) {
@@ -51,6 +69,44 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     @Override
     public String name() {
         return name;
+    }
+
+    final void setAddPending() {
+        if (!STATE_HANDLE.compareAndSet(this, INIT, ADD_PENDING)) {
+            logger.warn("Failed to setAddPending, the state is {}.", handlerState);
+        }
+    }
+
+    final boolean setAddComplete() {
+        for (; ; ) {
+            int oldState = handlerState;
+            if (oldState == REMOVE_COMPLETE) {
+                return false;
+            }
+            if (STATE_HANDLE.compareAndSet(this, oldState, ADD_COMPLETE)) {
+                return true;
+            }
+        }
+    }
+
+    final void setRemoved() {
+        handlerState = REMOVE_COMPLETE;
+    }
+
+    final void callHandlerAdded() throws Exception {
+        if (setAddComplete()) {
+            handler().handlerAdded(this);
+        }
+    }
+
+    final void callHandlerRemoved() throws Exception {
+        try {
+            if (handlerState == ADD_COMPLETE) {
+                handler().handlerRemoved(this);
+            }
+        } finally {
+            setRemoved();
+        }
     }
 
     private AbstractChannelHandlerContext findContextInbound() {

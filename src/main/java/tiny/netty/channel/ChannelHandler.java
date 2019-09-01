@@ -7,7 +7,7 @@ package tiny.netty.channel;
  */
 public interface ChannelHandler {
 
-    void handlerAdded(ChannelHandlerContext ctx);
+    void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
-    void handlerRemoved(ChannelHandlerContext ctx);
+    void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 }
