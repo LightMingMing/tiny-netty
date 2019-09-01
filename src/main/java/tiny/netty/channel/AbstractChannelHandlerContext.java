@@ -214,7 +214,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
         logger.debug("[{}] invokeBind({})", name, localAddress);
         if (invokeHandler()) {
             try {
-                ((ChannelOutboundHandler) handler()).bind(localAddress, promise);
+                ((ChannelOutboundHandler) handler()).bind(this, localAddress, promise);
             } catch (Throwable cause) {
                 promise.completeExceptionally(cause);
             }
@@ -239,7 +239,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
         logger.debug("[{}] invokeClose()...", name);
         if (invokeHandler()) {
             try {
-                ((ChannelOutboundHandler) handler()).close(promise);
+                ((ChannelOutboundHandler) handler()).close(this, promise);
             } catch (Throwable cause) {
                 promise.completeExceptionally(cause);
             }
