@@ -14,17 +14,24 @@ public abstract class AbstractChannel implements Channel {
     ;
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Unsafe unsafe;
+    private final DefaultChannelPipeline pipeline;
     private volatile EventLoop eventLoop;
     private volatile boolean registered;
     private ChannelFuture<?> closeFuture = new CompletableChannelFuture<>(this);
 
     protected AbstractChannel() {
         unsafe = newUnsafe();
+        pipeline = new DefaultChannelPipeline(this);
     }
 
     @Override
     public EventLoop eventLoop() {
         return eventLoop;
+    }
+
+    @Override
+    public ChannelPipeline pipeline() {
+        return pipeline;
     }
 
     @Override
@@ -82,7 +89,8 @@ public abstract class AbstractChannel implements Channel {
                 // 而公共部分, 也就是回调, 则在这里实现.
                 doRegister();
                 registered = true;
-                // TODO 回调通道处理器的handlerAdd()方法
+                // 回调通道处理器的handlerAdd()方法
+                pipeline.callHandlerAddedForAllHandlers();
 
                 safeSetSuccess(promise);
                 // TODO 回调通道处理器的channelRegistered()方法

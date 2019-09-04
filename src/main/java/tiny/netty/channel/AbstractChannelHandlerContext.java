@@ -67,6 +67,11 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     }
 
     @Override
+    public boolean isRemoved() {
+        return handlerState == REMOVE_COMPLETE;
+    }
+
+    @Override
     public String name() {
         return name;
     }

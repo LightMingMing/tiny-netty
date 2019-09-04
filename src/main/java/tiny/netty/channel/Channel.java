@@ -12,6 +12,9 @@ public interface Channel {
     // 通道所注册的事件循环器
     EventLoop eventLoop();
 
+    // 通道管道
+    ChannelPipeline pipeline();
+
     // 状态值: 是否注册到事件循环器上
     boolean isRegistered();
 

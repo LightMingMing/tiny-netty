@@ -25,6 +25,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         this.channel = channel;
         this.head = new HeadContext("head");
         this.tail = new TailContext("tail");
+        this.head.next = tail;
+        this.tail.prev = head;
     }
 
     @Override
@@ -121,7 +123,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             boolean removed = false;
             try {
                 // TODO
-                remove0(ctx);
+                synchronized (this) {
+                    remove0(ctx);
+                }
                 ctx.callHandlerRemoved();
                 removed = true;
             } catch (Throwable e) {
@@ -285,6 +289,20 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return promise;
     }
 
+    protected void callHandlerAddedForAllHandlers() {
+        PendingHandlerCallback task;
+        synchronized (this) {
+            assert !registered;
+            registered = true;
+            task = this.pendingHandlerCallbackHead;
+            this.pendingHandlerCallbackHead = null;
+        }
+        while (task != null) {
+            task.execute();
+            task = task.next;
+        }
+    }
+
     private abstract static class PendingHandlerCallback implements Runnable {
         protected final AbstractChannelHandlerContext ctx;
         private PendingHandlerCallback next;
@@ -314,7 +332,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                     logger.warn(
                             "Can't invoke handlerAdded() as the EventExecutor {} rejected it, removing handler {}.",
                             executor, ctx.name(), e);
-                    remove0(ctx);
+                    synchronized (this) {
+                        remove0(ctx);
+                    }
                     ctx.setRemoved();
                 }
             }

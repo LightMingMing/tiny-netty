@@ -19,6 +19,8 @@ public interface ChannelHandlerContext extends ChannelInboundInvoker, ChannelOut
 
     EventExecutor executor();
 
+    boolean isRemoved();
+
     String name();
 
     @Override

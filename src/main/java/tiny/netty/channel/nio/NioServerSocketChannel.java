@@ -12,7 +12,7 @@ import java.nio.channels.spi.SelectorProvider;
  */
 public class NioServerSocketChannel extends AbstractNioChannel {
 
-    protected NioServerSocketChannel() {
+    public NioServerSocketChannel() {
         super(openServerSocketChannel());
     }
 
