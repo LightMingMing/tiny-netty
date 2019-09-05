@@ -86,11 +86,35 @@ public class ChannelPipelineTest {
         }
     }
 
+    @Test
+    public void testDeregister() throws Exception {
+        EventLoop eventLoop = new NioEventLoopGroup(1).next();
+        try {
+            Channel channel = new NioServerSocketChannel();
+            TraceableChannelHandler h1 = new TraceableChannelHandler();
+            TraceableChannelHandler h2 = new TraceableChannelHandler();
+
+            channel.pipeline().addFirst("h1", h1).addLast("h2", h2);
+
+            eventLoop.register(channel).get();
+            assertThat(channel.isRegistered()).isTrue();
+
+            channel.deregister().get();
+            assertThat(channel.isRegistered()).isFalse();
+            assertThat(h1.awaitUnregistered()).isTrue();
+            assertThat(h2.awaitUnregistered()).isTrue();
+        } finally {
+            eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            eventLoop.awaitTermination(2, TimeUnit.SECONDS);
+        }
+    }
+
     static class TraceableChannelHandler extends ChannelInboundHandlerAdapter {
 
         private CountDownLatch added = new CountDownLatch(1);
         private CountDownLatch removed = new CountDownLatch(1);
         private CountDownLatch registered = new CountDownLatch(1);
+        private CountDownLatch unregistered = new CountDownLatch(1);
 
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -108,6 +132,12 @@ public class ChannelPipelineTest {
             super.channelRegistered(ctx);
         }
 
+        @Override
+        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+            unregistered.countDown();
+            super.channelUnregistered(ctx);
+        }
+
         boolean awaitAdded() throws InterruptedException {
             return added.await(1, TimeUnit.SECONDS);
         }
@@ -118,6 +148,10 @@ public class ChannelPipelineTest {
 
         boolean awaitRegistered() throws InterruptedException {
             return registered.await(1, TimeUnit.SECONDS);
+        }
+
+        boolean awaitUnregistered() throws InterruptedException {
+            return unregistered.await(1, TimeUnit.SECONDS);
         }
     }
 }

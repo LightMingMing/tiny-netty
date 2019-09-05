@@ -28,6 +28,10 @@ public interface Channel {
     // 创建一个新的channelFuture
     ChannelFuture<?> newPromise();
 
+    ChannelFuture<?> deregister();
+
+    ChannelFuture<?> deregister(ChannelFuture<?> promise);
+
     interface Unsafe {
 
         ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise);

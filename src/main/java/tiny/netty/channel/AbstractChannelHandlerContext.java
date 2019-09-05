@@ -60,6 +60,15 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
         }
     }
 
+    static void invokeChannelUnregistered(AbstractChannelHandlerContext ctx) {
+        EventExecutor executor = ctx.executor();
+        if (executor.inEventLoop()) {
+            ctx.invokeChannelUnregistered();
+        } else {
+            executor.execute(ctx::invokeChannelUnregistered);
+        }
+    }
+
     @Override
     public Channel channel() {
         return pipeline.channel();
@@ -167,13 +176,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
 
     @Override
     public AbstractChannelHandlerContext fireChannelUnregistered() {
-        AbstractChannelHandlerContext next = findContextInbound();
-        EventExecutor executor = next.executor();
-        if (executor.inEventLoop()) {
-            next.invokeChannelUnregistered();
-        } else {
-            executor.execute(next::invokeChannelUnregistered);
-        }
+        invokeChannelUnregistered(findContextInbound());
         return this;
     }
 

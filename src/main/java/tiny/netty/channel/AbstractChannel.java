@@ -54,6 +54,17 @@ public abstract class AbstractChannel implements Channel {
         return closeFuture;
     }
 
+    @Override
+    public ChannelFuture<?> deregister() {
+        return deregister(newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> deregister(ChannelFuture<?> promise) {
+        unsafe.deregister(promise);
+        return promise;
+    }
+
     protected abstract Unsafe newUnsafe();
 
     protected abstract void doRegister() throws Exception;
@@ -113,7 +124,8 @@ public abstract class AbstractChannel implements Channel {
             } else {
                 deregister0(promise);
             }
-            AbstractChannel.this.eventLoop = null;
+            // Avoid NPE
+            // AbstractChannel.this.eventLoop = null;
         }
 
         private void deregister0(ChannelFuture<?> promise) {
@@ -125,8 +137,8 @@ public abstract class AbstractChannel implements Channel {
                 doDeregister();
                 registered = false;
 
-                // TODO 回调channelUnregistered()
-
+                // 回调channelUnregistered()
+                pipeline.fireChannelUnregistered();
                 safeSetSuccess(promise);
                 // TODO 回调handlerRemoved()
 
