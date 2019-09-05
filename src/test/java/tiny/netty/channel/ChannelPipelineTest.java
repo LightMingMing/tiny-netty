@@ -32,6 +32,7 @@ public class ChannelPipelineTest {
 
             assertThat(h1.awaitAdded()).isTrue();
             assertThat(h1.awaitRemoved()).isTrue();
+            assertThat(h1.awaitRegistered()).isFalse();
             assertThat(ctx.isRemoved()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
@@ -62,10 +63,34 @@ public class ChannelPipelineTest {
         }
     }
 
-    static class TraceableChannelHandler extends ChannelHandlerAdapter {
+    @Test
+    public void testRegister() throws Exception {
+        EventLoop eventLoop = new NioEventLoopGroup(1).next();
+        try {
+            Channel channel = new NioServerSocketChannel();
+            TraceableChannelHandler h1 = new TraceableChannelHandler();
+            TraceableChannelHandler h2 = new TraceableChannelHandler();
+
+            channel.pipeline().addFirst("h1", h1).addLast("h2", h2);
+
+            eventLoop.register(channel).get();
+            assertThat(channel.isRegistered()).isTrue();
+
+            assertThat(h1.awaitAdded()).isTrue();
+            assertThat(h2.awaitAdded()).isTrue();
+            assertThat(h1.awaitRegistered()).isTrue();
+            assertThat(h2.awaitRegistered()).isTrue();
+        } finally {
+            eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            eventLoop.awaitTermination(2, TimeUnit.SECONDS);
+        }
+    }
+
+    static class TraceableChannelHandler extends ChannelInboundHandlerAdapter {
 
         private CountDownLatch added = new CountDownLatch(1);
         private CountDownLatch removed = new CountDownLatch(1);
+        private CountDownLatch registered = new CountDownLatch(1);
 
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -77,12 +102,22 @@ public class ChannelPipelineTest {
             removed.countDown();
         }
 
+        @Override
+        public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+            registered.countDown();
+            super.channelRegistered(ctx);
+        }
+
         boolean awaitAdded() throws InterruptedException {
             return added.await(1, TimeUnit.SECONDS);
         }
 
         boolean awaitRemoved() throws InterruptedException {
             return removed.await(1, TimeUnit.SECONDS);
+        }
+
+        boolean awaitRegistered() throws InterruptedException {
+            return registered.await(1, TimeUnit.SECONDS);
         }
     }
 }

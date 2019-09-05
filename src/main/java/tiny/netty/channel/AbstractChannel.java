@@ -93,7 +93,8 @@ public abstract class AbstractChannel implements Channel {
                 pipeline.callHandlerAddedForAllHandlers();
 
                 safeSetSuccess(promise);
-                // TODO 回调通道处理器的channelRegistered()方法
+                // 回调通道处理器的channelRegistered()方法
+                pipeline.fireChannelRegistered();
 
                 // TODO 如果通道是激活的, 回调通道处理器的channelActive()方法
                 //  同时如果通道曾经注册过(注册-注销-重新注册), 不回调channelActive()

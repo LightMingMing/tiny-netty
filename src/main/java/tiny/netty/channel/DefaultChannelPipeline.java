@@ -256,6 +256,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public ChannelPipeline fireChannelRegistered() {
+        AbstractChannelHandlerContext.invokeChannelRegistered(head);
         return this;
     }
 
@@ -386,7 +387,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-
+            ctx.fireChannelRegistered();
         }
 
         @Override
