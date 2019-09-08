@@ -6,6 +6,7 @@ import tiny.netty.channel.nio.NioServerSocketChannel;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
@@ -133,6 +134,33 @@ public class ChannelPipelineTest {
         }
     }
 
+    @Test
+    public void testChannelInactiveAfterClose() throws ExecutionException, InterruptedException {
+        EventLoop eventLoop = new NioEventLoopGroup(1).next();
+        try {
+            Channel channel = new NioServerSocketChannel();
+            TraceableChannelHandler h1 = new TraceableChannelHandler();
+            channel.pipeline().addFirst("h1", h1);
+
+            eventLoop.register(channel);
+            channel.bind(new InetSocketAddress(80)).get();
+            assertThat(channel.isOpen()).isTrue();
+            assertThat(channel.isActive()).isTrue();
+
+            // TODO simplify
+            ChannelFuture<?> closeFuture = channel.newPromise();
+            eventLoop.execute(() -> channel.close(closeFuture));
+            closeFuture.get();
+
+            assertThat(channel.isOpen()).isFalse();
+            assertThat(channel.isActive()).isFalse();
+            assertThat(h1.awaitActive()).isTrue();
+        } finally {
+            eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            eventLoop.awaitTermination(2, TimeUnit.SECONDS);
+        }
+    }
+
     static class TraceableChannelHandler extends ChannelInboundHandlerAdapter {
 
         private CountDownLatch added = new CountDownLatch(1);
@@ -140,6 +168,7 @@ public class ChannelPipelineTest {
         private CountDownLatch registered = new CountDownLatch(1);
         private CountDownLatch unregistered = new CountDownLatch(1);
         private CountDownLatch active = new CountDownLatch(1);
+        private CountDownLatch inactive = new CountDownLatch(1);
 
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -169,6 +198,12 @@ public class ChannelPipelineTest {
             super.channelActive(ctx);
         }
 
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            inactive.countDown();
+            super.channelInactive(ctx);
+        }
+
         boolean awaitAdded() throws InterruptedException {
             return added.await(1, TimeUnit.SECONDS);
         }
@@ -187,6 +222,10 @@ public class ChannelPipelineTest {
 
         boolean awaitActive() throws InterruptedException {
             return active.await(1, TimeUnit.SECONDS);
+        }
+
+        boolean awaitInactive() throws InterruptedException {
+            return inactive.await(1, TimeUnit.SECONDS);
         }
     }
 }

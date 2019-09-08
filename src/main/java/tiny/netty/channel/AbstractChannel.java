@@ -61,6 +61,7 @@ public abstract class AbstractChannel implements Channel {
 
     @Override
     public ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise) {
+        // TODO callback outboundHandler
         unsafe.bind(localAddress, promise);
         return promise;
     }
@@ -72,7 +73,21 @@ public abstract class AbstractChannel implements Channel {
 
     @Override
     public ChannelFuture<?> deregister(ChannelFuture<?> promise) {
+        // TODO callback outboundHandler
         unsafe.deregister(promise);
+        return promise;
+    }
+
+    @Override
+    public ChannelFuture<?> close() {
+        // TODO callback outboundHandler
+        return close(newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> close(ChannelFuture<?> promise) {
+        // TODO callback outboundHandler
+        unsafe.close(promise);
         return promise;
     }
 
@@ -140,31 +155,33 @@ public abstract class AbstractChannel implements Channel {
         @Override
         public void deregister(ChannelFuture<?> promise) {
             if (!eventLoop.inEventLoop()) {
-                eventLoop.execute(() -> deregister0(promise));
+                eventLoop.execute(() -> deregister0(promise, false));
             } else {
-                deregister0(promise);
+                deregister0(promise, false);
             }
             // Avoid NPE
             // AbstractChannel.this.eventLoop = null;
         }
 
-        private void deregister0(ChannelFuture<?> promise) {
+        private void deregister0(ChannelFuture<?> promise, boolean fireChannelActive) {
             try {
                 if (!isRegistered()) {
                     promise.completeExceptionally(new IllegalStateException("unregistered to an eventLoop"));
                     return;
                 }
                 doDeregister();
-                registered = false;
-
-                // 回调channelUnregistered()
-                pipeline.fireChannelUnregistered();
-                safeSetSuccess(promise);
-                // TODO 回调handlerRemoved()
-
             } catch (Throwable cause) {
-                logger.warn("Failed to deregister.", cause);
-                safeSetFailure(promise, cause);
+                logger.warn("Unexpected exception occurred while de registering a channel.", cause);
+            } finally {
+                if (fireChannelActive) {
+                    pipeline.fireChannelInactive();
+                }
+                if (registered) {
+                    registered = false;
+                    // 回调channelUnregistered()
+                    pipeline.fireChannelUnregistered();
+                }
+                safeSetSuccess(promise);
             }
 
         }
@@ -182,6 +199,8 @@ public abstract class AbstractChannel implements Channel {
 
         private void close0(ChannelFuture<?> promise) {
             // TODO netty里这部分有点复杂, 这里把核心部分弄上去了...
+            // 通道关闭时还没有激活, 则不回调channelInactive()方法
+            boolean wasActive = isActive();
             try {
                 doClose();
                 safeSetSuccess(promise);
@@ -191,8 +210,9 @@ public abstract class AbstractChannel implements Channel {
                 safeSetFailure(promise, cause);
                 closeFuture.complete(null);
             }
-            // TODO
-            deregister(newPromise());
+            // 在关闭通道前是激活状态, 关闭后是失活状态, 则回调channelInactive()方法
+            // TODO 通道close之后, isActive()仍返回true, 这里似乎有些问题... 看下netty
+            deregister0(newPromise(), wasActive && !isActive());
         }
 
         @Override

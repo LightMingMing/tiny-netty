@@ -43,7 +43,7 @@ public class NioServerSocketChannel extends AbstractNioChannel {
 
     @Override
     public boolean isActive() {
-        return javaChannel().socket().isBound();
+        return isOpen() && javaChannel().socket().isBound();
     }
 
     private class NioMessageUnsafe extends AbstractNioUnsafe implements NioUnsafe {

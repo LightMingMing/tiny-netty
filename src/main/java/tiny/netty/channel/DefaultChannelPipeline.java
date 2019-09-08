@@ -274,6 +274,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public ChannelPipeline fireChannelInactive() {
+        AbstractChannelHandlerContext.invokeChannelInactive(head);
         return this;
     }
 
@@ -390,23 +391,26 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) {
             ctx.fireChannelRegistered();
-            // TODO maybe auto read in here... or both...
         }
 
         @Override
         public void channelUnregistered(ChannelHandlerContext ctx) {
             ctx.fireChannelUnregistered();
+            // TODO remove handlers from pipeline
+            // 如果通道不是激活的, 则删除管道中的通道处理器
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             ctx.fireChannelActive();
-            // TODO auto read in here ?
+            // TODO auto read in here
         }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-
+            ctx.fireChannelInactive();
+            // 在关闭通道后, 先回调的是channelInactive()方法, 后回调channelUnregistered()方法
+            // 因此此处不能删除通道处理器
         }
 
         @Override

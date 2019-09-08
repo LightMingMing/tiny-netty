@@ -15,6 +15,9 @@ public interface Channel {
     // 通道管道
     ChannelPipeline pipeline();
 
+    // 状态值: 是否打开
+    boolean isOpen();
+
     // 状态值: 是否注册到事件循环器上
     boolean isRegistered();
 
@@ -35,6 +38,10 @@ public interface Channel {
     ChannelFuture<?> deregister();
 
     ChannelFuture<?> deregister(ChannelFuture<?> promise);
+
+    ChannelFuture<?> close();
+
+    ChannelFuture<?> close(ChannelFuture<?> promise);
 
     interface Unsafe {
 

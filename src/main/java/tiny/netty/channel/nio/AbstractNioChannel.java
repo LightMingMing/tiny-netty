@@ -20,6 +20,11 @@ public abstract class AbstractNioChannel extends AbstractChannel implements NioC
     }
 
     @Override
+    public boolean isOpen() {
+        return javaChannel().isOpen();
+    }
+
+    @Override
     public NioEventLoop eventLoop() {
         return (NioEventLoop) super.eventLoop();
     }
