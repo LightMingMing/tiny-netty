@@ -4,6 +4,7 @@ import org.junit.Test;
 import tiny.netty.channel.nio.NioEventLoopGroup;
 import tiny.netty.channel.nio.NioServerSocketChannel;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -109,12 +110,36 @@ public class ChannelPipelineTest {
         }
     }
 
+    @Test
+    public void testChannelActive() throws Exception {
+        EventLoop eventLoop = new NioEventLoopGroup(1).next();
+        try {
+            Channel channel = new NioServerSocketChannel();
+            TraceableChannelHandler h1 = new TraceableChannelHandler();
+            channel.pipeline().addFirst("h1", h1);
+
+            ChannelFuture<?> regFuture = eventLoop.register(channel);
+            ChannelFuture<?> actFuture = channel.bind(new InetSocketAddress(80));
+
+            regFuture.get();
+            assertThat(channel.isRegistered()).isTrue();
+
+            actFuture.get();
+            assertThat(channel.isActive()).isTrue();
+            assertThat(h1.awaitActive()).isTrue();
+        } finally {
+            eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
+            eventLoop.awaitTermination(2, TimeUnit.SECONDS);
+        }
+    }
+
     static class TraceableChannelHandler extends ChannelInboundHandlerAdapter {
 
         private CountDownLatch added = new CountDownLatch(1);
         private CountDownLatch removed = new CountDownLatch(1);
         private CountDownLatch registered = new CountDownLatch(1);
         private CountDownLatch unregistered = new CountDownLatch(1);
+        private CountDownLatch active = new CountDownLatch(1);
 
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -138,6 +163,12 @@ public class ChannelPipelineTest {
             super.channelUnregistered(ctx);
         }
 
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            active.countDown();
+            super.channelActive(ctx);
+        }
+
         boolean awaitAdded() throws InterruptedException {
             return added.await(1, TimeUnit.SECONDS);
         }
@@ -152,6 +183,10 @@ public class ChannelPipelineTest {
 
         boolean awaitUnregistered() throws InterruptedException {
             return unregistered.await(1, TimeUnit.SECONDS);
+        }
+
+        boolean awaitActive() throws InterruptedException {
+            return active.await(1, TimeUnit.SECONDS);
         }
     }
 }

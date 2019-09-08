@@ -268,6 +268,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public ChannelPipeline fireChannelActive() {
+        AbstractChannelHandlerContext.invokeChannelActive(head);
         return this;
     }
 
@@ -389,6 +390,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) {
             ctx.fireChannelRegistered();
+            // TODO maybe auto read in here... or both...
         }
 
         @Override
@@ -398,7 +400,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
+            ctx.fireChannelActive();
+            // TODO auto read in here ?
         }
 
         @Override

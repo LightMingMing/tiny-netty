@@ -28,6 +28,10 @@ public interface Channel {
     // 创建一个新的channelFuture
     ChannelFuture<?> newPromise();
 
+    ChannelFuture<?> bind(SocketAddress localAddress);
+
+    ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise);
+
     ChannelFuture<?> deregister();
 
     ChannelFuture<?> deregister(ChannelFuture<?> promise);

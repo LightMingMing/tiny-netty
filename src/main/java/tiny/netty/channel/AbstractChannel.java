@@ -55,6 +55,17 @@ public abstract class AbstractChannel implements Channel {
     }
 
     @Override
+    public ChannelFuture<?> bind(SocketAddress localAddress) {
+        return bind(localAddress, newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise) {
+        unsafe.bind(localAddress, promise);
+        return promise;
+    }
+
+    @Override
     public ChannelFuture<?> deregister() {
         return deregister(newPromise());
     }
@@ -76,6 +87,8 @@ public abstract class AbstractChannel implements Channel {
     protected abstract void doBind(SocketAddress localAddress) throws Exception;
 
     protected abstract class AbstractUnsafe implements Unsafe {
+
+        boolean firstRegistration = true;
 
         @Override
         public ChannelFuture<?> register(EventLoop eventLoop, ChannelFuture<?> promise) {
@@ -99,6 +112,10 @@ public abstract class AbstractChannel implements Channel {
                 // 具体实现交给子类, 如NioChannel, EpollChannel, KQueueChannel
                 // 而公共部分, 也就是回调, 则在这里实现.
                 doRegister();
+                boolean firstRegistered = firstRegistration;
+                if (firstRegistration) {
+                    firstRegistration = false;
+                }
                 registered = true;
                 // 回调通道处理器的handlerAdd()方法
                 pipeline.callHandlerAddedForAllHandlers();
@@ -107,8 +124,11 @@ public abstract class AbstractChannel implements Channel {
                 // 回调通道处理器的channelRegistered()方法
                 pipeline.fireChannelRegistered();
 
-                // TODO 如果通道是激活的, 回调通道处理器的channelActive()方法
-                //  同时如果通道曾经注册过(注册-注销-重新注册), 不回调channelActive()
+                // 如果通道是激活的, 回调通道处理器的channelActive()方法
+                // 同时如果通道曾经注册过(注册-注销-重新注册), 不回调channelActive()
+                if (isActive() && firstRegistered) {
+                    pipeline.fireChannelActive();
+                }
 
             } catch (Throwable cause) {
                 logger.warn("Failed to register.", cause);
@@ -191,7 +211,9 @@ public abstract class AbstractChannel implements Channel {
             try {
                 doBind(localAddress);
                 safeSetSuccess(promise);
-                // TODO 回调channelActive()方法
+                // 回调channelActive()方法
+                pipeline.fireChannelActive();
+                firstRegistration = false;
             } catch (Throwable cause) {
                 logger.warn("Failed to bind the socketAddress : {}", localAddress);
                 safeSetFailure(promise, cause);
