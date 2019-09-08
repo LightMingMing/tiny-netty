@@ -9,7 +9,17 @@ import java.net.SocketAddress;
  */
 public interface ChannelOutboundInvoker {
 
+    ChannelFuture<?> bind(SocketAddress localAddress);
+
     ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise);
 
+    ChannelFuture<?> deregister();
+
+    ChannelFuture<?> deregister(ChannelFuture<?> promise);
+
+    ChannelFuture<?> close();
+
     ChannelFuture<?> close(ChannelFuture<?> promise);
+
+    ChannelFuture<?> newPromise();
 }

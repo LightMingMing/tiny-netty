@@ -61,8 +61,8 @@ public abstract class AbstractChannel implements Channel {
 
     @Override
     public ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise) {
-        // TODO callback outboundHandler
-        unsafe.bind(localAddress, promise);
+        // callback outboundHandler
+        pipeline.bind(localAddress, promise);
         return promise;
     }
 
@@ -73,21 +73,21 @@ public abstract class AbstractChannel implements Channel {
 
     @Override
     public ChannelFuture<?> deregister(ChannelFuture<?> promise) {
-        // TODO callback outboundHandler
-        unsafe.deregister(promise);
+        // callback outboundHandler
+        pipeline.deregister(promise);
         return promise;
     }
 
     @Override
     public ChannelFuture<?> close() {
-        // TODO callback outboundHandler
+        // callback outboundHandler
         return close(newPromise());
     }
 
     @Override
     public ChannelFuture<?> close(ChannelFuture<?> promise) {
-        // TODO callback outboundHandler
-        unsafe.close(promise);
+        // callback outboundHandler
+        pipeline.close(promise);
         return promise;
     }
 

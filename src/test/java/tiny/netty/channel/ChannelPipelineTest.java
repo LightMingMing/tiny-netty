@@ -147,14 +147,10 @@ public class ChannelPipelineTest {
             assertThat(channel.isOpen()).isTrue();
             assertThat(channel.isActive()).isTrue();
 
-            // TODO simplify
-            ChannelFuture<?> closeFuture = channel.newPromise();
-            eventLoop.execute(() -> channel.close(closeFuture));
-            closeFuture.get();
-
+            channel.close().get();
             assertThat(channel.isOpen()).isFalse();
             assertThat(channel.isActive()).isFalse();
-            assertThat(h1.awaitActive()).isTrue();
+            assertThat(h1.awaitInactive()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             eventLoop.awaitTermination(2, TimeUnit.SECONDS);

@@ -284,13 +284,41 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
+    public ChannelFuture<?> bind(SocketAddress localAddress) {
+        return bind(localAddress, newPromise());
+    }
+
+    @Override
     public ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise) {
+        tail.bind(localAddress, promise);
         return promise;
     }
 
     @Override
-    public ChannelFuture<?> close(ChannelFuture<?> promise) {
+    public ChannelFuture<?> deregister() {
+        return deregister(newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> deregister(ChannelFuture<?> promise) {
+        tail.deregister(promise);
         return promise;
+    }
+
+    @Override
+    public ChannelFuture<?> close() {
+        return close(newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> close(ChannelFuture<?> promise) {
+        tail.close(promise);
+        return promise;
+    }
+
+    @Override
+    public ChannelFuture<?> newPromise() {
+        return channel.newPromise();
     }
 
     protected void callHandlerAddedForAllHandlers() {
@@ -430,12 +458,17 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void bind(ChannelHandlerContext ctx, SocketAddress localAddress, ChannelFuture<?> promise) throws Exception {
+            channel.unsafe().bind(localAddress, promise);
+        }
 
+        @Override
+        public void deregister(ChannelHandlerContext ctx, ChannelFuture<?> promise) throws Exception {
+            channel.unsafe().deregister(promise);
         }
 
         @Override
         public void close(ChannelHandlerContext ctx, ChannelFuture<?> promise) throws Exception {
-
+            channel.unsafe().close(promise);
         }
     }
 

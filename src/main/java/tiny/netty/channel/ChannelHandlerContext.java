@@ -2,8 +2,6 @@ package tiny.netty.channel;
 
 import tiny.netty.util.concurrent.EventExecutor;
 
-import java.net.SocketAddress;
-
 /**
  * 通道处理器上下文
  *
@@ -37,10 +35,4 @@ public interface ChannelHandlerContext extends ChannelInboundInvoker, ChannelOut
 
     @Override
     ChannelHandlerContext fireExceptionCaught(Throwable cause);
-
-    @Override
-    ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise);
-
-    @Override
-    ChannelFuture<?> close(ChannelFuture<?> promise);
 }

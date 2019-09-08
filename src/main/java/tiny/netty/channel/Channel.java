@@ -7,7 +7,7 @@ import java.net.SocketAddress;
  *
  * @author zhaomingming
  */
-public interface Channel {
+public interface Channel extends ChannelOutboundInvoker{
 
     // 通道所注册的事件循环器
     EventLoop eventLoop();
@@ -30,18 +30,6 @@ public interface Channel {
 
     // 创建一个新的channelFuture
     ChannelFuture<?> newPromise();
-
-    ChannelFuture<?> bind(SocketAddress localAddress);
-
-    ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise);
-
-    ChannelFuture<?> deregister();
-
-    ChannelFuture<?> deregister(ChannelFuture<?> promise);
-
-    ChannelFuture<?> close();
-
-    ChannelFuture<?> close(ChannelFuture<?> promise);
 
     interface Unsafe {
 

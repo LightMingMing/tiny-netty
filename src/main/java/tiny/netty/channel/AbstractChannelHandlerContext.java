@@ -272,6 +272,11 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     }
 
     @Override
+    public ChannelFuture<?> bind(SocketAddress localAddress) {
+        return bind(localAddress, newPromise());
+    }
+
+    @Override
     public ChannelFuture<?> bind(SocketAddress localAddress, ChannelFuture<?> promise) {
         AbstractChannelHandlerContext next = findContextOutbound();
         EventExecutor executor = next.executor();
@@ -297,6 +302,41 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     }
 
     @Override
+    public ChannelFuture<?> deregister() {
+        return deregister(newPromise());
+    }
+
+    @Override
+    public ChannelFuture<?> deregister(ChannelFuture<?> promise) {
+        AbstractChannelHandlerContext next = findContextOutbound();
+        EventExecutor executor = next.executor();
+        if (executor.inEventLoop()) {
+            next.invokeDeregister(promise);
+        } else {
+            executor.execute(() -> next.invokeDeregister(promise));
+        }
+        return promise;
+    }
+
+    private void invokeDeregister(ChannelFuture<?> promise) {
+        logger.debug("[{}] invokeDeregister()...", name);
+        if (invokeHandler()) {
+            try {
+                ((ChannelOutboundHandler) handler()).deregister(this, promise);
+            } catch (Throwable cause) {
+                promise.completeExceptionally(cause);
+            }
+        } else {
+            deregister(promise);
+        }
+    }
+
+    @Override
+    public ChannelFuture<?> close() {
+        return close(newPromise());
+    }
+
+    @Override
     public ChannelFuture<?> close(ChannelFuture<?> promise) {
         AbstractChannelHandlerContext next = findContextOutbound();
         EventExecutor executor = next.executor();
@@ -319,5 +359,10 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
         } else {
             close(promise);
         }
+    }
+
+    @Override
+    public ChannelFuture<?> newPromise() {
+        return new CompletableChannelFuture<>(channel());
     }
 }
