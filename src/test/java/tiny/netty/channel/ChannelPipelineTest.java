@@ -50,14 +50,14 @@ public class ChannelPipelineTest {
             TraceableChannelHandler h1 = new TraceableChannelHandler();
 
             eventLoop.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
 
             channel.pipeline().addFirst("h1", h1);
             ChannelHandlerContext ctx = channel.pipeline().context("h1");
             assertThat(h1.awaitAdded()).isTrue();
 
             channel.pipeline().remove("h1");
-            assertThat(h1.awaitRemoved());
+            assertThat(h1.awaitRemoved()).isTrue();
             assertThat(ctx.isRemoved()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
@@ -151,6 +151,7 @@ public class ChannelPipelineTest {
             assertThat(channel.isOpen()).isFalse();
             assertThat(channel.isActive()).isFalse();
             assertThat(h1.awaitInactive()).isTrue();
+            assertThat(h1.awaitRemoved()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             eventLoop.awaitTermination(2, TimeUnit.SECONDS);
@@ -158,7 +159,7 @@ public class ChannelPipelineTest {
     }
 
     static class TraceableChannelHandler extends ChannelInboundHandlerAdapter {
-
+        private static final int DEFAULT_TIMEOUT = 2;
         private CountDownLatch added = new CountDownLatch(1);
         private CountDownLatch removed = new CountDownLatch(1);
         private CountDownLatch registered = new CountDownLatch(1);
@@ -201,27 +202,27 @@ public class ChannelPipelineTest {
         }
 
         boolean awaitAdded() throws InterruptedException {
-            return added.await(1, TimeUnit.SECONDS);
+            return added.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
 
         boolean awaitRemoved() throws InterruptedException {
-            return removed.await(1, TimeUnit.SECONDS);
+            return removed.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
 
         boolean awaitRegistered() throws InterruptedException {
-            return registered.await(1, TimeUnit.SECONDS);
+            return registered.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
 
         boolean awaitUnregistered() throws InterruptedException {
-            return unregistered.await(1, TimeUnit.SECONDS);
+            return unregistered.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
 
         boolean awaitActive() throws InterruptedException {
-            return active.await(1, TimeUnit.SECONDS);
+            return active.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
 
         boolean awaitInactive() throws InterruptedException {
-            return inactive.await(1, TimeUnit.SECONDS);
+            return inactive.await(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
         }
     }
 }

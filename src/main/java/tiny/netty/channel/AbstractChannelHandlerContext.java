@@ -136,6 +136,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
 
     final void callHandlerAdded() throws Exception {
         if (setAddComplete()) {
+            logger.debug("[{}] handlerAdded()... ", name());
             handler().handlerAdded(this);
         }
     }
@@ -143,6 +144,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
     final void callHandlerRemoved() throws Exception {
         try {
             if (handlerState == ADD_COMPLETE) {
+                logger.debug("[{}] handlerRemoved()... ", name());
                 handler().handlerRemoved(this);
             }
         } finally {

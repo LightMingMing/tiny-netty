@@ -335,6 +335,54 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
+    // 从头到尾依次提交删除处理器的任务, 从尾到头依次将通道处理器真正删除
+    // 保证各个处理器的方法在删除前都能够被从头到尾回调(当处理器都采用自定义执行器的时候)
+    // TODO 还是满不容易理解的
+    private void destroy() {
+        destroyUp(head.next);
+    }
+
+    private void destroyUp(AbstractChannelHandlerContext ctx) {
+        Thread thread = Thread.currentThread();
+        final AbstractChannelHandlerContext tail = this.tail;
+        for (; ; ) {
+            if (ctx == tail) {
+                destroyDown(tail.prev);
+                break;
+            }
+            final EventExecutor executor = ctx.executor();
+            if (!executor.inEventLoop(thread)) {
+                final AbstractChannelHandlerContext finalCtx = ctx;
+                executor.execute(() -> destroyUp(finalCtx));
+                break;
+            }
+            ctx = ctx.next;
+        }
+    }
+
+    private void destroyDown(AbstractChannelHandlerContext ctx) {
+        Thread thread = Thread.currentThread();
+        final AbstractChannelHandlerContext head = this.head;
+        for (; ; ) {
+            if (ctx == head) {
+                break;
+            }
+            final EventExecutor executor = ctx.executor();
+            if (executor.inEventLoop(thread)) {
+                synchronized (this) {
+                    remove0(ctx);
+                }
+                callHandlerRemoved0(ctx);
+            } else {
+                final AbstractChannelHandlerContext finalCtx = ctx;
+                executor.execute(() -> destroyDown(finalCtx));
+                break;
+            }
+            ctx = ctx.prev;
+        }
+    }
+
+
     private abstract static class PendingHandlerCallback implements Runnable {
         protected final AbstractChannelHandlerContext ctx;
         private PendingHandlerCallback next;
@@ -424,8 +472,11 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelUnregistered(ChannelHandlerContext ctx) {
             ctx.fireChannelUnregistered();
-            // TODO remove handlers from pipeline
-            // 如果通道不是激活的, 则删除管道中的通道处理器
+            // remove handlers from pipeline
+            // 如果通道是关闭的, 则删除管道中的通道处理器
+            if (!channel.isOpen()) {
+                destroy();
+            }
         }
 
         @Override
