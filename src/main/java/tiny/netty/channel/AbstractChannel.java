@@ -11,7 +11,7 @@ import java.net.SocketAddress;
  * @author zhaomingming
  */
 public abstract class AbstractChannel implements Channel {
-    ;
+
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Unsafe unsafe;
     private final DefaultChannelPipeline pipeline;
@@ -211,7 +211,6 @@ public abstract class AbstractChannel implements Channel {
                 closeFuture.complete(null);
             }
             // 在关闭通道前是激活状态, 关闭后是失活状态, 则回调channelInactive()方法
-            // TODO 通道close之后, isActive()仍返回true, 这里似乎有些问题... 看下netty
             deregister0(newPromise(), wasActive && !isActive());
         }
 

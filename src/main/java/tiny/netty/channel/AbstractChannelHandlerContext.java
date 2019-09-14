@@ -185,7 +185,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             try {
                 ((ChannelInboundHandler) handler()).channelRegistered(this);
             } catch (Throwable cause) {
-                fireExceptionCaught(cause);
+                invokeExceptionCaught(cause);
             }
         } else {
             this.fireChannelRegistered();
@@ -204,7 +204,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             try {
                 ((ChannelInboundHandler) handler()).channelUnregistered(this);
             } catch (Throwable cause) {
-                fireExceptionCaught(cause);
+                invokeExceptionCaught(cause);
             }
         } else {
             this.fireChannelUnregistered();
@@ -223,7 +223,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             try {
                 ((ChannelInboundHandler) handler()).channelActive(this);
             } catch (Throwable cause) {
-                fireExceptionCaught(cause);
+                invokeExceptionCaught(cause);
             }
         } else {
             this.fireChannelActive();
@@ -242,7 +242,7 @@ public abstract class AbstractChannelHandlerContext implements ChannelHandlerCon
             try {
                 ((ChannelInboundHandler) handler()).channelInactive(this);
             } catch (Throwable cause) {
-                fireExceptionCaught(cause);
+                invokeExceptionCaught(cause);
             }
         } else {
             this.fireChannelInactive();
