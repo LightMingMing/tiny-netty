@@ -24,7 +24,7 @@ public class NioEventLoopTest {
         Channel channel = new NioServerSocketChannel();
         try {
             eventLoop.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             eventLoop.awaitTermination(2, TimeUnit.SECONDS);
@@ -39,7 +39,7 @@ public class NioEventLoopTest {
         Channel channel = new NioServerSocketChannel();
         try {
             eventLoop.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
 
             ChannelFuture<?> deregisterFuture = channel.newPromise();
             channel.unsafe().deregister(deregisterFuture);
@@ -47,7 +47,7 @@ public class NioEventLoopTest {
             assertThat(channel.isRegistered()).isFalse();
 
             eventLoop.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
         } finally {
             eventLoop.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             eventLoop.awaitTermination(2, TimeUnit.SECONDS);
@@ -62,7 +62,7 @@ public class NioEventLoopTest {
         Channel channel = new NioServerSocketChannel();
         try {
             group.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
 
             ChannelFuture<?> deregisterFuture = channel.newPromise();
             channel.unsafe().deregister(deregisterFuture);
@@ -70,7 +70,7 @@ public class NioEventLoopTest {
             assertThat(channel.isRegistered()).isFalse();
 
             group.register(channel).get();
-            assertThat(channel.isRegistered());
+            assertThat(channel.isRegistered()).isTrue();
         } finally {
             group.shutdownGracefully(1, 5, TimeUnit.SECONDS);
             group.awaitTermination(2, TimeUnit.SECONDS);

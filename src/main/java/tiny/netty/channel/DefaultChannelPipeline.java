@@ -19,6 +19,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private final AbstractChannelHandlerContext tail;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private boolean registered = false;
+    private boolean firstRegistration = true;
     private volatile PendingHandlerCallback pendingHandlerCallbackHead;
 
     public DefaultChannelPipeline(Channel channel) {
@@ -322,16 +323,19 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     protected void callHandlerAddedForAllHandlers() {
-        PendingHandlerCallback task;
-        synchronized (this) {
-            assert !registered;
-            registered = true;
-            task = this.pendingHandlerCallbackHead;
-            this.pendingHandlerCallbackHead = null;
-        }
-        while (task != null) {
-            task.execute();
-            task = task.next;
+        if (firstRegistration) {
+            firstRegistration = false;
+            PendingHandlerCallback task;
+            synchronized (this) {
+                assert !registered;
+                registered = true;
+                task = this.pendingHandlerCallbackHead;
+                this.pendingHandlerCallbackHead = null;
+            }
+            while (task != null) {
+                task.execute();
+                task = task.next;
+            }
         }
     }
 
